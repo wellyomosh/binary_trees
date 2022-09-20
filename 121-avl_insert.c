@@ -1,104 +1,124 @@
 #include "binary_trees.h"
 
 /**
-* arreglo - todo.
-* @tree: todo.
-* @value: todo.
-*/
-void arreglo(avl_t **tree, int value)
+ * balance_left - balances left side
+ * @node: pointer to temp node
+ * Return: root of tree
+ */
+avl_t *balance_left(avl_t *node)
 {
-	int n;
+	avl_t *ret;
+	int bal;
 
-	n = binary_tree_balance(*tree);
-	if (n > 1)
+	if (!node->left)
+		return (NULL);
+	bal = binary_tree_balance(node->left);
+	if (bal > 0)
 	{
-		if (value < (*tree)->left->n)
-		{
-			*tree = binary_tree_rotate_right(*tree);
-			return;
-		}
-		if (value > (*tree)->left->n)
-		{
-			(*tree)->left = binary_tree_rotate_left((*tree)->left);
-			*tree = binary_tree_rotate_right(*tree);
-			return;
-		}
+		ret = binary_tree_rotate_right(node);
+		return (ret);
 	}
-	if (n < -1)
-	{
-		if (value > (*tree)->right->n)
-		{
-			*tree = binary_tree_rotate_left(*tree);
-			return;
-		}
-		if (value < (*tree)->right->n)
-		{
-			(*tree)->right = binary_tree_rotate_right((*tree)->right);
-			*tree = binary_tree_rotate_left(*tree);
-			return;
-		}
-	}
+	binary_tree_rotate_left(node->left);
+	ret = binary_tree_rotate_right(node);
+	return (ret);
 }
 
 /**
-* avl_aux - inserts a value in an AVL Tree.
-* @tree: pointer to the root of the AVL tree for inserting the value.
-* @value: value to store in the node to be inserted.
-* Return: pointer to the created node, or NULL on failure.
-*/
-avl_t *avl_aux(avl_t **tree, int value)
+ * balance_right - balances left side
+ * @node: pointer to temp node
+ * Return: root of tree
+ */
+avl_t *balance_right(avl_t *node)
 {
-	avl_t *nodo;
+	avl_t *ret;
+	int bal;
 
-	if (value < (*tree)->n)
+	if (!node->right)
+		return (NULL);
+	bal = binary_tree_balance(node->right);
+	if (bal > 0)
 	{
-		if (!(*tree)->left)
-		{
-			(*tree)->left = binary_tree_node(*tree, value);
-			return ((*tree)->left);
-		}
-		else
-		{
-			nodo = avl_aux(&((*tree))->left, value);
-			if (nodo)
-				arreglo(tree, value);
-			return (nodo);
-		}
+		ret = binary_tree_rotate_right(node);
+		return (ret);
 	}
-	if (value > (*tree)->n)
-	{
-		if (!(*tree)->right)
-		{
-			(*tree)->right = binary_tree_node(*tree, value);
-			return ((*tree)->right);
-		}
-		else
-		{
-			nodo = avl_aux(&((*tree))->right, value);
-			if (nodo)
-			{
-				arreglo(tree, value);
-				return (nodo);
-			}
-		}
-	}
-	return (NULL);
+	binary_tree_rotate_left(node->right);
+	ret = binary_tree_rotate_right(node);
+	return (ret);
 }
 
 /**
-* avl_insert - inserts a value in an AVL Tree.
-* @tree: double pointer to the root of the AVL tree for inserting the value.
-* @value:  value to store in the node to be inserted.
-* Return: pointer to the created node, or NULL on failure.
-*/
+ * rebalance - rebalance AVL tree
+ * @node: pointer to node to rebalance
+ * @tree: double pointer to root of tree
+ * Return: pointer to input node
+ */
+avl_t *rebalance(avl_t *node, avl_t **tree)
+{
+	avl_t *tmp, *root;
+	int bal;
+
+	tmp = node;
+	while (tmp)
+	{
+		bal = binary_tree_balance(tmp);
+		if (bal > 1)
+		{
+			root = balance_left(tmp);
+			if (root)
+				*tree = root;
+		}
+		else if (bal < -1)
+		{
+			root = balance_right(tmp);
+			if (root)
+				*tree = root;
+		}
+		tmp = tmp->parent;
+	}
+	return (node);
+}
+
+/**
+ * avl_insert - inserts a value in an AVL Tree
+ * @tree: double pointer to root of tree
+ * @value: input value
+ * Return: pointer to the created node, or NULL on failure
+ */
 avl_t *avl_insert(avl_t **tree, int value)
 {
+	avl_t *av, *node;
+
 	if (!tree)
 		return (NULL);
+	av = binary_tree_node(*tree, value);
 	if (!*tree)
 	{
-		*tree = (avl_t *)binary_tree_node(NULL, value);
-		return (*tree);
+		return (*tree = av);
 	}
-	return (avl_aux(tree, value));
+	node = *tree;
+	while (node)
+	{
+		if (value == node->n)
+			return (free(av), NULL);
+		if (value < node->n)
+		{
+			if (!node->left)
+			{
+				av->parent = node;
+				node->left = av;
+				return (rebalance(node, tree));
+			}
+			node = node->left;
+		} else
+		{
+			if (!node->right)
+			{
+				av->parent = node;
+				node->right = av;
+				return (rebalance(node, tree));
+			}
+			node = node->right;
+		}
+	}
+	return (free(av), NULL);
 }
