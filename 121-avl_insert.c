@@ -69,3 +69,4 @@ avl_t *avl_insert(avl_t **tree, int value)
 	r_insert_node(tree, *tree, &new, value);
 	return (new);
 }
+
