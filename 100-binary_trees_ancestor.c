@@ -1,26 +1,63 @@
 #include "binary_trees.h"
 
 /**
- * binary_trees_ancestor - finds the lowest common ancestors
- * @first: a pointer to the first nodes
- * @second: a pointer to the second nodes
+ * binary_trees_ancestor - finds the lowest common ancestor of two nodes
+ * @first: a pointer to the first node to find the ancestor
+ * @second: a pointer to the second node to find the ancestor
  *
- * Return: a pointer to the lowest common node, Null otherwises
+ * Return: pointer to the ancestor node
+ *         NULL if there is no ancestor node
  */
-binary_tree_t
-*binary_trees_ancestor(const binary_tree_t *first,
-			const binary_tree_t *second)
+binary_tree_t *binary_trees_ancestor(const binary_tree_t *first,
+				     const binary_tree_t *second)
 {
-	binary_tree_t *first_parent, *second_parent;
+	size_t depth_first, depth_second;
 
 	if (!first || !second)
 		return (NULL);
-	else if (first == second->parent)
-		return (second->parent);
-	else if (second == first->parent)
-		return (first->parent);
 
-	first_parent = binary_trees_ancestor(first->parent, second);
-	second_parent = binary_trees_ancestor(first, second->parent);
-	return (first_parent && !second_parent ? first_parent : second_parent);
+	depth_first = binary_tree_depth(first);
+	depth_second = binary_tree_depth(second);
+
+	while (depth_first > depth_second)
+	{
+		first = first->parent;
+		depth_first--;
+	}
+	while (depth_second > depth_first)
+	{
+		second = second->parent;
+		depth_second--;
+	}
+	while (first && second)
+	{
+		if (first == second)
+			return ((binary_tree_t *)first);
+		first = first->parent;
+		second = second->parent;
+	}
+	return ((binary_tree_t *)first);
+}
+
+/**
+ * binary_tree_depth - measures the depth of a node in a binary tree
+ * @tree: node to calculate the depth of
+ *
+ * Return: depth of the node
+ *         0 if tree is NULL
+ */
+size_t binary_tree_depth(const binary_tree_t *tree)
+{
+	size_t depth = 0;
+
+	if (!tree)
+		return (0);
+
+	while (tree->parent)
+	{
+		depth++;
+		tree = tree->parent;
+	}
+
+	return (depth);
 }
