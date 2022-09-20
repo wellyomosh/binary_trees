@@ -1,196 +1,171 @@
 #include "binary_trees.h"
-
-#define INIT_NODE {0, NULL, NULL, NULL}
-
-#define CONVERT "0123456789ABCDEF"
-
-#define SETUP_NODE_BLOC { \
-	tmp = *root; \
-	size = binary_tree_size(*root); \
-	binary = &buffer[49]; \
-	*binary = 0; \
-	}
-
-#define FREE_NODE_BLOC { \
-		res = tmp->n; \
-		free(tmp); \
-		*root = NULL; \
-	}
-
-#define SWAP_HEAD_BLOC { \
-		head = *root; \
-		head = swap_head(head, tmp); \
-		res = head->n; \
-		free(head); \
-		*root = tmp; \
-		tmp = perc_down(tmp); \
-		*root = tmp; \
-	}
-
-#define CONVERT_LOOP { \
-		*--binary = CONVERT[size % 2]; \
-		size /= 2; \
-	}
+#include <stdlib.h>
 
 /**
- * swap - swaps two nodes in binary tree
- * @a: first node
- * @b: second node
- * Return: pointer to root
+ * binary_tree_height - function that measures the height of a binary tree
+ * @tree: binary tree
+ * Return: height of the @tree
  */
-bst_t *swap(bst_t *a, bst_t *b)
+size_t binary_tree_height(const binary_tree_t *tree)
 {
-	bst_t a_copy = INIT_NODE;
+	size_t l_height;
+	size_t r_height;
 
-	a_copy.n = a->n;
-	a_copy.parent = a->parent;
-	a_copy.left = a->left;
-	a_copy.right = a->right;
-	a->parent = b;
-	a->left = b->left;
-	a->right = b->right;
-	if (b->left)
-		b->left->parent = a;
-	if (b->right)
-		b->right->parent = a;
+	if (tree == NULL)
+		return (0);
+	if (tree->left)
+	{
+		l_height = 1 + binary_tree_height(tree->left);
+	}
+	else
+	{
+		l_height = 0;
+	}
 
-	b->parent = a_copy.parent;
-	if (a_copy.parent)
+	if (tree->right)
+		r_height = 1 + binary_tree_height(tree->right);
+	else
 	{
-		if (a == a_copy.parent->left)
-			a_copy.parent->left = b;
-		else
-			a_copy.parent->right = b;
+		r_height = 0;
 	}
-	if (b == a_copy.left)
-	{
-		b->left = a;
-		b->right = a_copy.right;
-		if (a_copy.right)
-			a_copy.right->parent = b;
-	}
-	else if (b == a_copy.right)
-	{
-		b->right = a;
-		b->left = a_copy.left;
-		if (a_copy.left)
-			a_copy.left->parent = b;
-	}
-	while (b->parent)
-		b = b->parent;
-	return (b);
+
+	if (l_height > r_height)
+		return (l_height);
+	return (r_height);
 }
 
 /**
- * binary_tree_size - measures the size of a binary tree
- * @tree: input binary tree
- * Return: number of descendant child nodes
+ * is_perfect_recursion - recursive function to check if bt is perfect
+ * @tree: root
+ * @depth: depth
+ * @level: checks level
+ * Return: 1 if true, 0 if false
  */
-size_t binary_tree_size(const binary_tree_t *tree)
+int is_perfect_recursion(const binary_tree_t *tree, int depth, int level)
 {
-	if (!tree)
+	if (tree == NULL)
+		return (1);
+
+	if (tree->left == NULL && tree->right == NULL)
+		return (depth == level + 1);
+
+	if (tree->left == NULL || tree->right == NULL)
 		return (0);
 
-	return (1 + binary_tree_size(tree->left) + binary_tree_size(tree->right));
+	return (is_perfect_recursion(tree->left, depth, level + 1) &&
+		is_perfect_recursion(tree->right, depth, level + 1));
 }
 
 /**
- * swap_head - helper func to swap head and node
- * @head: pointer to head
- * @node: pointer to node
- * Return: pointer to severed head of tree
+ * binary_tree_is_perfect - function that checks if a binary tree is perfect
+ * @tree: binary tree
+ * Return: 1 if @tree is perfect
  */
-heap_t *swap_head(heap_t *head, heap_t *node)
+int binary_tree_is_perfect(const binary_tree_t *tree)
 {
-	if (node->parent->left == node)
-	{
-		node->parent->left = NULL;
-	} else
-		node->parent->right = NULL;
-	node->parent = NULL;
-	node->left = head->left;
-	node->right = head->right;
-	if (head->left)
-		head->left->parent = node;
-	if (head->right)
-		head->right->parent = node;
-	return (head);
-}
+	int depth = 0;
 
-/**
- * perc_down - percolate head into correct position
- * @node: pointer to head
- * Return: pointer to head of tree
- */
-heap_t *perc_down(heap_t *node)
-{
-	int max;
-	heap_t *next = node;
+	if (tree == NULL)
+		return (0);
 
-	if (!node)
-		return (NULL);
-	max = node->n;
-	if (node->left)
-		max = MAX(node->left->n, max);
-	if (node->right)
-		max = MAX(node->right->n, max);
-	if (node->left && max == node->left->n)
-		next = node->left;
-	else if (node->right && max == node->right->n)
-		next = node->right;
-	if (next != node)
+	while (tree)
 	{
-		swap(node, next);
-		perc_down(node);
+		depth++;
+		tree = tree->left;
 	}
-	return (next);
+
+	return (is_perfect_recursion(tree, depth, 0));
 }
 
 /**
- * heap_extract - extracts the root node of a Max Binary Heap
- * @root: double pointer to root of tree
- * Return: value stored in the root node
+ * full_heapify - heapifies full tree
+ * @node: node of binary tree
+ * Return: Nothing.
+ */
+void full_heapify(heap_t *node)
+{
+	int t;
+
+	if (!node || (!node->left && !node->right))
+		return;
+	while (node)
+	{
+		if (node->left && node->right && node->n < node->right->n &&
+		    node->n < node->left->n && node->left->n < node->right->n)
+		{
+			/* swap(&node->n, &node->right->n); */
+			t = node->n, node->n = node->right->n, node->right->n = t;
+			node = node->right;
+		}
+		else if (node->left && node->right && node->n < node->right->n
+			 && node->n < node->left->n
+			 && node->left->n > node->right->n)
+		{
+			t = node->n, node->n = node->left->n, node->left->n = t;
+			/* swap(&node->n, &node->left->n); */
+			node = node->left;
+		}
+		else if (node->left && node->left->n > node->n)
+		{
+			/* swap(&node->n, &node->left->n); */
+			t = node->n, node->n = node->left->n, node->left->n = t;
+			node = node->left;
+		}
+		else if (node->right && node->right->n > node->n)
+		{
+			t = node->n, node->n = node->right->n, node->right->n = t;
+			/* swap(&node->n, &node->right->n); */
+			node = node->right;
+		}
+		else
+			return;
+	}
+}
+
+/**
+ * heap_extract - function that extracts the root node of a Max Binary Heap
+ * @root: root of binary tree
+ * Return: value of removed node on success, 0 on failure
  */
 int heap_extract(heap_t **root)
 {
-	size_t size, i;
-	char *binary, c, buffer[50];
-	int res;
-	heap_t *tmp, *head;
+	heap_t *curr = NULL;
+	int r_full, l_full, r_height, l_height, temp;
 
 	if (!root || !*root)
 		return (0);
-	SETUP_NODE_BLOC;
-	if (size == 1)
+	curr = *root;
+	while (curr)
 	{
-		FREE_NODE_BLOC;
-		return (res);
-	}
-	do {
-		CONVERT_LOOP;
-	} while (size);
-
-	for (i = 1; i < strlen(binary); i++)
-	{
-		c = binary[i];
-		if (i == strlen(binary) - 1)
+		if (!curr->left && !curr->right)
 		{
-			if (c == '1')
+			if (curr == *root)
 			{
-				tmp = tmp->right;
-				break;
+				temp = curr->n, free(curr), *root = NULL;
+				return (temp);
 			}
-			else if (c == '0')
-			{
-				tmp = tmp->left;
-				break;
-			}
+
+			temp = (*root)->n;
+			(*root)->n = curr->n;
+			curr->n = temp;
+			if (curr->parent && curr->parent->left == curr)
+				curr->parent->left = NULL;
+			else if (curr->parent)
+				curr->parent->right = NULL;
+			free(curr);
+			full_heapify(*root);
+			return (temp);
 		}
-		if (c == '1')
-			tmp = tmp->right;
-		else if (c == '0')
-			tmp = tmp->left;
+		r_full = binary_tree_is_perfect(curr->right);
+		l_full = binary_tree_is_perfect(curr->left);
+		r_height = binary_tree_height(curr->right);
+		l_height = binary_tree_height(curr->left);
+		if ((r_full && l_full && r_height < l_height)
+		    || (r_full && !l_full && r_height != l_height)
+		    || (!curr->right))
+			curr = curr->left;
+		else
+			curr = curr->right;
 	}
-	SWAP_HEAD_BLOC;
-	return (res);
+	return (0);
 }
