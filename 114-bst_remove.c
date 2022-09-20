@@ -1,54 +1,55 @@
 #include "binary_trees.h"
 
-bst_t *search(bst_t *root, int value)
+/**
+ * bst_remove - removes a node from a Binary Search Tree
+ * @root: a pointer to the root node of the tree where you will remove a node
+ * @value: the value to remove in the tree
+ * Return: a pointer to the new root node of the tree after removal
+ *         NULL on failure
+ */
+bst_t *bst_remove(bst_t *root, int value)
 {
+	bst_t *tmp = NULL;
+
 	if (!root)
 		return (NULL);
-	while (root)
+
+	if (value < root->n)
+		root->left = bst_remove(root->left, value);
+	else if (value > root->n)
+		root->right = bst_remove(root->right, value);
+	else
 	{
-		if (value > root->n)
-			root = root->right;
-		else if (value < root->n)
-			root = root->left;
-		break;
+		if (!root->left)
+		{
+			tmp = root->right;
+			free(root);
+			return (tmp);
+		}
+		else if (!root->right)
+		{
+			tmp = root->left;
+			free(root);
+			return (tmp);
+		}
+		tmp = bst_min_val(root->right);
+		root->n = tmp->n;
+		root->right = bst_remove(root->right, tmp->n);
 	}
 	return (root);
 }
 
 /**
- * bst_remove - removes a node from a BST
- * @root: a pointer to the root node
- * @value: is the value to remove from the BST
- *
- * Return: a pointer to the new root node of the tree after
- * removing the desired value
+ * bst_min_val - finds the smallest node from a Binary Search Tree
+ * @root: a pointer to the root node of the tree
+ * Return: a pointer to the smallest node
  */
-bst_t *bst_remove(bst_t *root, int value)
+bst_t *bst_min_val(bst_t *root)
 {
-	bst_t *node, *minimum;
+	bst_t *min = root;
 
-	if (!root)
-		return (NULL);
+	while (min->left)
+		min = min->left;
 
-	node = search(root, value);
-	if (!node)
-		return (NULL);
-	/* search the minimum left as possible */
-	minimum = node->right;
-	while (minimum->left)
-		minimum = minimum->left;
-
-	minimum->parent->left = minimum->right;
-	minimum->left = node->left;
-	minimum->right = node->right;
-	minimum->parent = node->parent;
-
-	node->right->parent = minimum;
-	node->left->parent = minimum;
-
-	if (minimum->parent == NULL)
-		root = minimum;
-	free(node);
-
-	return (root);
+	return (min);
 }
